@@ -5,8 +5,16 @@ import (
 	"net/http"
 )
 
+func readinessHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content- Type", "text/plain")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Ready"))
+}
+
 func main() {
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("/healthz", readinessHandler)
 
 	server := &http.Server{
 		Handler: mux,
@@ -14,7 +22,7 @@ func main() {
 	}
 
 	fileserver := http.FileServer(http.Dir("."))
-	mux.Handle("/", fileserver)
+	mux.Handle("/app/", http.StripPrefix("/app", fileserver))
 
 	log.Println("Starting server on on :8080")
 
