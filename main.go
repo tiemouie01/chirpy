@@ -8,10 +8,13 @@ import (
 func main() {
 	mux := http.NewServeMux()
 
-	server := http.Server{
+	server := &http.Server{
 		Handler: mux,
 		Addr:    ":8080",
 	}
+
+	fileserver := http.FileServer(http.Dir("."))
+	mux.Handle("/", fileserver)
 
 	log.Println("Starting server on on :8080")
 
