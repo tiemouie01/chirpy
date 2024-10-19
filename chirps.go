@@ -100,3 +100,27 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 
 	respondWithJSON(w, 200, formattedChirps)
 }
+
+func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("chirpID"))
+	if err != nil {
+		respondWithError(w, 400, "Failed to parse ID")
+		return
+	}
+
+	chirp, err := cfg.dbQueries.GetChirp(r.Context(), id)
+	if err != nil {
+		respondWithError(w, 404, "Chirp not found.")
+		return
+	}
+
+	formattedChirp := Chirp{
+		ID:        chirp.ID.String(),
+		CreatedAt: chirp.CreatedAt.String(),
+		UpdatedAt: chirp.UpdatedAt.String(),
+		Body:      chirp.Body,
+		UserID:    chirp.UserID.UUID.String(),
+	}
+
+	respondWithJSON(w, 200, formattedChirp)
+}
