@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+type validatedChirp struct {
+	CleanedBody string `json:"cleaned_body"`
+}
+
 func cleanChirp(body string) string {
 	profaneWords := []string{"kerfuffle", "sharbert", "fornax"}
 	words := strings.Split(body, " ")
