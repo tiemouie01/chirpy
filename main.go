@@ -2,12 +2,15 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"sync/atomic"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/tiemouie01/chirpy/internal/database"
@@ -16,6 +19,21 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	dbQueries      *database.Queries
+}
+
+type validatedChirp struct {
+	CleanedBody string `json:"cleaned_body"`
+}
+
+type User struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
+}
+
+type jsonError struct {
+	Error string `json:"error"`
 }
 
 func main() {
@@ -70,4 +88,29 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 		cfg.fileserverHits.Add(1)
 		next.ServeHTTP(w, r)
 	})
+}
+
+func respondWithError(w http.ResponseWriter, code int, msg string) {
+	errorRespBody := jsonError{Error: msg}
+	dat, err := json.Marshal(errorRespBody)
+	if err != nil {
+		errorRespBody.Error = "Something went wrong"
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(code)
+		w.Write(dat)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(dat)
+}
+
+func respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+	response, err := json.Marshal(payload)
+	if err != nil {
+		respondWithError(w, 400, "Something went wrong")
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(response)
 }
