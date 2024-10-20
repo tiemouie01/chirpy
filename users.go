@@ -58,3 +58,40 @@ func (cfg *apiConfig) handlerCreateUser(w http.ResponseWriter, r *http.Request) 
 
 	respondWithJSON(w, 201, formattedUser)
 }
+
+func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
+	type paramters struct {
+		Password string `json:"password"`
+		Email    string `json:"email"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	params := paramters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, 400, "Something went wrong")
+		return
+	}
+
+	// Search for user in db
+	user, err := cfg.dbQueries.FindUser(r.Context(), params.Email)
+	if err != nil {
+		respondWithError(w, 500, "Failed to fetch user")
+		return
+	}
+
+	// Check if db password matches password in params
+	err = auth.CheckPasswordHash(params.Password, user.HashedPassword.String)
+	if err != nil {
+		respondWithError(w, 403, "Invalid login credentials")
+		return
+	}
+
+	// If passwords match, return user details
+	formattedUser := User{
+		ID:        user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email:     user.Email,
+	}
+	respondWithJSON(w, 200, formattedUser)
+}
