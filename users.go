@@ -95,7 +95,7 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 	// Create user JWT
 	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret, time.Duration(params.ExpiresInSeconds))
 	if err != nil {
-		respondWithError(w, 503, "Failed to create JWT"+err.Error())
+		respondWithError(w, 503, err.Error())
 		return
 	}
 
