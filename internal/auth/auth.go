@@ -43,7 +43,7 @@ func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (str
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Issuer:    "chirpy",
 		IssuedAt:  &jwt.NumericDate{Time: currentTime},
-		ExpiresAt: &jwt.NumericDate{Time: currentTime.Add(expiresIn)},
+		ExpiresAt: &jwt.NumericDate{Time: currentTime.Add(time.Second * expiresIn)},
 		Subject:   userID.String(),
 	})
 
@@ -60,13 +60,10 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 		return []byte(tokenSecret), nil
 	})
 	if err != nil {
-		formattedError := RequestError{
-			StatusCode: 401,
-		}
-		return uuid.Nil, &formattedError
+		return uuid.Nil, err
 	}
 
-	if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok && token.Valid {
 		userID, err := uuid.Parse(claims.Subject)
 		if err != nil {
 			return uuid.Nil, errors.New("invalid user ID in token")
@@ -82,7 +79,7 @@ func GetBearerToken(headers http.Header) (string, error) {
 	splitToken := strings.Split(reqToken, "Bearer ")
 	reqToken = splitToken[1]
 
-	if reqToken != "" {
+	if reqToken == "" {
 		return "", errors.New("token does not exist")
 	}
 	return reqToken, nil

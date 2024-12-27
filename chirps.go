@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/tiemouie01/chirpy/internal/auth"
 	"github.com/tiemouie01/chirpy/internal/database"
 )
 
@@ -32,18 +33,16 @@ func cleanChirp(body string) string {
 }
 func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
-		Body   string `json:"body"`
-		UserID string `json:"user_id"`
+		Body string `json:"body"`
 	}
 
-	const defaultError = "Something went wrong"
 	const characterError = "Chirp is too long"
 
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, 400, defaultError)
+		respondWithError(w, 400, "Error decoding JSON"+err.Error())
 		return
 	}
 
@@ -52,12 +51,20 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	cleanedBody := cleanChirp(params.Body)
-	userID, err := uuid.Parse(params.UserID)
+	// Get user ID from JWT token
+	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, 400, "Invalid user ID")
+		respondWithError(w, 400, err.Error())
 		return
 	}
+	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, 401, "You are not authorized to access this resource "+err.Error())
+		return
+	}
+
+	// Clean chirp body
+	cleanedBody := cleanChirp(params.Body)
 
 	createChirpParams := database.CreateChirpParams{
 		Body:   cleanedBody,
