@@ -7,7 +7,7 @@ CREATE TABLE "users" (
     hashed_password TEXT DEFAULT 'unset'
 );
 
-CREATE TABLE chirps (
+CREATE TABLE "chirps" (
     id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
