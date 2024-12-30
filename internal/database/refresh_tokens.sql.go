@@ -27,7 +27,7 @@ RETURNING token, created_at, updated_at, expires_at, revoked_at, user_id
 type CreateRefreshTokenParams struct {
 	Token     string
 	ExpiresAt time.Time
-	UserID    uuid.NullUUID
+	UserID    uuid.UUID
 }
 
 func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshTokenParams) (RefreshToken, error) {

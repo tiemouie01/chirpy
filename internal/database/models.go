@@ -25,7 +25,7 @@ type RefreshToken struct {
 	UpdatedAt time.Time
 	ExpiresAt time.Time
 	RevokedAt sql.NullTime
-	UserID    uuid.NullUUID
+	UserID    uuid.UUID
 }
 
 type User struct {
