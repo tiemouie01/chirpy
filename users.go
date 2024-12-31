@@ -121,3 +121,34 @@ func (cfg *apiConfig) handlerLoginUser(w http.ResponseWriter, r *http.Request) {
 	}
 	respondWithJSON(w, 200, formattedUser)
 }
+
+func (cfg *apiConfig) handlerRefreshToken(w http.ResponseWriter, r *http.Request) {
+	// Get old token from header
+	refreshToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, 401, err.Error())
+		return
+	}
+
+	// Look up the token in the database
+	userId, err := cfg.dbQueries.GetUserFromRefreshToken(r.Context(), refreshToken)
+	if err != nil {
+		respondWithError(w, 401, err.Error())
+		return
+	}
+
+	// Create the refresh token
+	token, err := auth.MakeJWT(userId, cfg.jwtSecret, 3600)
+	if err != nil {
+		respondWithError(w, 500, err.Error())
+		return
+	}
+
+	// Return the token
+	type Token struct {
+		Token string `json:"token"`
+	}
+	respondWithJSON(w, 200, Token{
+		Token: token,
+	})
+}
