@@ -47,7 +47,8 @@ func (q *Queries) CreateRefreshToken(ctx context.Context, arg CreateRefreshToken
 const getUserFromRefreshToken = `-- name: GetUserFromRefreshToken :one
 SELECT (user_id)
 FROM refresh_tokens
-WHERE token = $1
+WHERE token = $1 
+  AND revoked_at IS NOT NULL
 `
 
 func (q *Queries) GetUserFromRefreshToken(ctx context.Context, token string) (uuid.UUID, error) {
