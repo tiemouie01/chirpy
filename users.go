@@ -170,3 +170,66 @@ func (cfg *apiConfig) handlerRevokeToken(w http.ResponseWriter, r *http.Request)
 	// Return 204 status code
 	w.WriteHeader(204)
 }
+
+func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, r *http.Request) {
+	type parameters struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	// Decode the json parameters
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		respondWithError(w, 500, "There was an error handling the request")
+		return
+	}
+
+	// Get the user from using their access token.
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, 401, "You are not authorized to perform this action.")
+		return
+	}
+	userId, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, 401, "You are not authorized to perform this action.")
+		return
+	}
+
+	// Hash the password
+	hashedPassword, err := auth.HashPassword(params.Email)
+	if err != nil {
+		respondWithError(w, 500, err.Error())
+		return
+	}
+
+	// Update the user record in the database
+	user, err := cfg.dbQueries.UpdateUser(r.Context(), database.UpdateUserParams{
+		ID:    userId,
+		Email: params.Email,
+		HashedPassword: sql.NullString{
+			String: hashedPassword,
+			Valid:  true,
+		},
+	})
+	if err != nil {
+		respondWithError(w, 500, "Error updating the user's information.")
+		return
+	}
+
+	type UpdatedUser struct {
+		ID        uuid.UUID `json:"id"`
+		Email     string    `json:"email"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+	}
+
+	respondWithJSON(w, 200, UpdatedUser{
+		ID:        user.ID,
+		Email:     user.Email,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	})
+}
