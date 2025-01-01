@@ -88,12 +88,12 @@ func GetBearerToken(headers http.Header) (string, error) {
 }
 
 func MakeRefreshToken() (string, error) {
-	randomInt, err := rand.Read([]byte{32})
+	b := make([]byte, 32)
+	_, err := rand.Read(b)
 	if err != nil {
-		return "", errors.New("Error creating 256-bit string")
+		return "", errors.New("failed to generate refresh token")
 	}
-
-	refreshToken := hex.EncodeToString([]byte(fmt.Sprintf("%d", randomInt)))
+	refreshToken := hex.EncodeToString(b)
 
 	return refreshToken, nil
 }
