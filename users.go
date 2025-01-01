@@ -152,3 +152,21 @@ func (cfg *apiConfig) handlerRefreshToken(w http.ResponseWriter, r *http.Request
 		Token: token,
 	})
 }
+
+func (cfg *apiConfig) handlerRevokeToken(w http.ResponseWriter, r *http.Request) {
+	// Get the token from the header
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, 401, err.Error())
+		return
+	}
+
+	// Revoke the token
+	err = cfg.dbQueries.RevokeRefreshToken(r.Context(), token)
+	if err != nil {
+		respondWithError(w, 500, err.Error())
+	}
+
+	// Return 204 status code
+	w.WriteHeader(204)
+}
