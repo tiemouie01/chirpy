@@ -25,3 +25,8 @@ RETURNING id, email, created_at, updated_at;
 -- name: DeleteUser :exec
 DELETE FROM users
 WHERE id = $1;
+
+-- name: UpgradeUser :exec
+UPDATE users
+SET is_chirpy_red = true
+WHERE id = $1;
