@@ -97,3 +97,14 @@ func MakeRefreshToken() (string, error) {
 
 	return refreshToken, nil
 }
+
+func GetAPIKey(headers http.Header) (string, error) {
+	apiKey := headers.Get("Authorization")
+	splitToken := strings.Split(apiKey, "ApiKey ")
+	apiKey = splitToken[1]
+
+	if apiKey == "" {
+		return "", errors.New("token does not exist")
+	}
+	return apiKey, nil
+}
