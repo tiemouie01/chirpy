@@ -19,6 +19,7 @@ type apiConfig struct {
 	dbQueries      *database.Queries
 	platform       string
 	jwtSecret      string
+	polkaApiKey    string
 }
 
 type jsonError struct {
@@ -43,6 +44,7 @@ func main() {
 		dbQueries:      dbQueries,
 		platform:       os.Getenv("PLATFORM"),
 		jwtSecret:      os.Getenv("JWT_SECRET"),
+		polkaApiKey:    os.Getenv("POLKA_KEY"),
 	}
 
 	mux := http.NewServeMux()
