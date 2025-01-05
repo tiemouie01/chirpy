@@ -19,3 +19,7 @@ WHERE id = $1;
 -- name: DeleteChirp :exec
 DELETE FROM chirps
 WHERE id = $1 AND user_id = $2;
+
+-- name: GetAllChirpsByAuthor :many
+SELECT * FROM chirps
+WHERE user_id = $1;
