@@ -88,9 +88,32 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 }
 
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
-	chirps, err := cfg.dbQueries.GetAllChirps(r.Context())
+	// Check for author_id in query params
+	authorID := r.URL.Query().Get("author_id")
+
+	var chirps []database.Chirp
+	var err error
+
+	if authorID != "" {
+		// Parse UUID from string
+		authorUUID, err := uuid.Parse(authorID)
+		if err != nil {
+			respondWithError(w, 400, "Invalid authorID format")
+			return
+		}
+		chirps, err = cfg.dbQueries.GetAllChirpsByAuthor(r.Context(), uuid.NullUUID{
+			UUID:  authorUUID,
+			Valid: true,
+		})
+		if err != nil {
+			respondWithError(w, 500, "Error collecting author chirps")
+		}
+	} else {
+		chirps, err = cfg.dbQueries.GetAllChirps(r.Context())
+	}
+
 	if err != nil {
-		respondWithError(w, 500, "Error collecting chirps.")
+		respondWithError(w, 500, "Error collecting chirps")
 		return
 	}
 
