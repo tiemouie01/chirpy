@@ -88,8 +88,9 @@ func (cfg *apiConfig) handlerCreateChirp(w http.ResponseWriter, r *http.Request)
 }
 
 func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request) {
-	// Check for author_id in query params
+	// Check for author_id and sort in query params
 	authorID := r.URL.Query().Get("author_id")
+	sortParam := r.URL.Query().Get("sort")
 
 	var chirps []database.Chirp
 	var err error
@@ -101,15 +102,36 @@ func (cfg *apiConfig) handlerGetAllChirps(w http.ResponseWriter, r *http.Request
 			respondWithError(w, 400, "Invalid authorID format")
 			return
 		}
-		chirps, err = cfg.dbQueries.GetAllChirpsByAuthor(r.Context(), uuid.NullUUID{
-			UUID:  authorUUID,
-			Valid: true,
-		})
-		if err != nil {
-			respondWithError(w, 500, "Error collecting author chirps")
+
+		if sortParam == "desc" {
+			chirps, err = cfg.dbQueries.GetAllChirpsByAuthorDesc(r.Context(), uuid.NullUUID{
+				UUID:  authorUUID,
+				Valid: true,
+			})
+			if err != nil {
+				respondWithError(w, 500, "Error collecting author chirps")
+				return
+			}
+		} else {
+			chirps, err = cfg.dbQueries.GetAllChirpsByAuthor(r.Context(), uuid.NullUUID{
+				UUID:  authorUUID,
+				Valid: true,
+			})
+			if err != nil {
+				respondWithError(w, 500, "Error collecting author chirps")
+				return
+			}
 		}
 	} else {
-		chirps, err = cfg.dbQueries.GetAllChirps(r.Context())
+		if sortParam == "desc" {
+			chirps, err = cfg.dbQueries.GetAllChirpsDesc(r.Context())
+			if err != nil {
+				respondWithError(w, 500, "Error collecting chirps")
+				return
+			}
+		} else {
+			chirps, err = cfg.dbQueries.GetAllChirps(r.Context())
+		}
 	}
 
 	if err != nil {
